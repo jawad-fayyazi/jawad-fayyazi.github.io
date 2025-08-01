@@ -3,101 +3,110 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jawad Ali Fayyazi – Portfolio</title>
+  <title>Jawad Ali Fayyazi - Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
   <style>
-    body {
+    * {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      color: #222;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: #0f172a;
+      color: #f1f5f9;
+      line-height: 1.6;
     }
     header {
-      background: #111;
-      color: #fff;
-      padding: 40px 20px;
+      background: #1e293b;
+      padding: 2rem;
       text-align: center;
+      animation: fadeIn 1s ease-in;
     }
     header h1 {
-      margin: 0;
-      font-size: 2.5em;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #38bdf8;
     }
     header p {
-      margin: 10px 0 0;
-      font-size: 1.2em;
-      color: #ccc;
+      font-size: 1.2rem;
+      color: #94a3b8;
     }
     section {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 20px;
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
+      animation: slideUp 1s ease-in;
     }
     h2 {
-      border-bottom: 2px solid #eee;
-      padding-bottom: 10px;
-      color: #444;
+      font-size: 2rem;
+      color: #38bdf8;
+      margin-bottom: 1rem;
+    }
+    .projects {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      color: #cbd5e1;
     }
     .project {
-      margin: 20px 0;
-    }
-    .project h3 {
-      margin: 0;
-    }
-    .project p {
-      margin: 5px 0 10px;
-      color: #666;
+      background: #1e293b;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #334155;
     }
     footer {
       text-align: center;
-      padding: 20px;
-      background: #eee;
-      margin-top: 40px;
-      font-size: 0.9em;
-      color: #888;
+      padding: 2rem;
+      font-size: 1rem;
+      color: #64748b;
     }
     a {
-      color: #0056b3;
+      color: #38bdf8;
       text-decoration: none;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Jawad Ali Fayyazi</h1>
+    <p>Experienced Web Developer | Aspiring Data Engineer</p>
+  </header>
 
-<header>
-  <h1>Jawad Ali Fayyazi</h1>
-  <p>Web Developer | WordPress Plugin Intern | Tech Enthusiast</p>
-</header>
+  <section>
+    <h2>About Me</h2>
+    <p>I am an experienced web developer with a passion for building powerful, scalable web solutions. Currently transitioning into the world of data engineering, where I aim to combine my web background with large-scale data pipeline development and cloud architecture. This portfolio will reflect my data engineering journey and showcase relevant work and skills over time.</p>
+  </section>
 
-<section>
-  <h2>About Me</h2>
-  <p>I'm an aspiring web developer and science content creator. I build websites, work with PHP and WordPress, and create short videos explaining fascinating tech and science facts. Currently building a web builder app called Ezysite and learning bug bounty security as well.</p>
-</section>
+  <section>
+    <h2>Projects</h2>
+    <div class="projects">
+      <div class="project">
+        <h3>Coming Soon</h3>
+        <p>Projects will appear here as I build my data engineering skills and work on real-world data solutions.</p>
+      </div>
+      <div class="project">
+        <h3>Coming Soon</h3>
+        <p>Stay tuned for interesting, real-world applications in cloud, data pipelines, and big data.</p>
+      </div>
+    </div>
+  </section>
 
-<section>
-  <h2>Projects</h2>
-  <div class="project">
-    <h3>Ezysite Web Builder</h3>
-    <p>A custom web builder using GrapesJS, Laravel Wave, and Volt. Lets users create and live host sites with custom headers, footers, and templates.</p>
-  </div>
-  <div class="project">
-    <h3>PSEI Sync Receiver</h3>
-    <p>A WordPress plugin that syncs post data from a master site via REST API. Used for post mirroring between WordPress instances.</p>
-  </div>
-  <div class="project">
-    <h3>Ali Astronyx (YouTube)</h3>
-    <p>My YouTube channel where I post short science and tech videos in an engaging style, combining space, curiosity, and fun facts.</p>
-  </div>
-</section>
+  <section>
+    <h2>Contact</h2>
+    <p>Let's connect on <a href="https://www.linkedin.com/in/YOUR_LINKEDIN_ID/" target="_blank">LinkedIn</a></p>
+  </section>
 
-<section>
-  <h2>Contact</h2>
-  <p>Email: <a href="mailto:jawad.ali.fayyazi@gmail.com">jawad.ali.fayyazi@gmail.com</a></p>
-  <p>GitHub: <a href="https://github.com/jawad-fayyazi" target="_blank">github.com/jawad-fayyazi</a></p>
-  <p>YouTube: <a href="https://youtube.com/@aliastronyx" target="_blank">@AliAstronyx</a></p>
-</section>
-
-<footer>
-  © 2025 Jawad Ali Fayyazi. All rights reserved.
-</footer>
-
+  <footer>
+    <p>&copy; 2025 Jawad Ali Fayyazi. All rights reserved.</p>
+  </footer>
 </body>
 </html>
