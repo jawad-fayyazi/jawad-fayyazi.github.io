@@ -4,190 +4,70 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Jawad Ali Fayyazi - Portfolio</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-    }
-    body {
-      background: #0f172a;
-      color: #f1f5f9;
-      line-height: 1.6;
-    }
-    header {
-      background: #1e293b;
-      padding: 2rem;
-      text-align: center;
-      animation: fadeIn 1s ease-in;
-    }
-    header h1 {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: #38bdf8;
-    }
-    header p {
-      font-size: 1.2rem;
-      color: #94a3b8;
-    }
-    section {
-      max-width: 900px;
-      margin: auto;
-      padding: 2rem;
-      animation: slideUp 1s ease-in;
-    }
-    h2 {
-      font-size: 2rem;
-      color: #38bdf8;
-      margin-bottom: 1rem;
-    }
-    .projects {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      color: #cbd5e1;
-    }
-    .project {
-      background: #1e293b;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid #334155;
-    }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 1rem;
-      color: #64748b;
-    }
-    a {
-      color: #38bdf8;
-      text-decoration: none;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes slideUp {
-      from { transform: translateY(50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .contact-section {
-  background-color: #121212;
-  color: #e0e0e0;
-  padding: 60px 20px;
-  text-align: center;
-  animation: fadeIn 1s ease-in-out;
-}
-
-.contact-section h2 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-}
-
-.contact-links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 30px;
-}
-
-.contact-links a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #ffffff;
-  background-color: #1f1f1f;
-  padding: 10px 20px;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.contact-links a:hover {
-  background-color: #333;
-  transform: scale(1.05);
-}
-
-.contact-links img {
-  width: 24px;
-  height: 24px;
-}
-
-/* Simple fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-  <header>
-  <h1>Jawad Ali Fayyazi</h1>
-  <p>Experienced Web Developer | Pursuing Java for Software Engineering</p>
-</header>
-
-<section>
-  <h2>About Me</h2>
-  <p>
-    I am an experienced web developer with a passion for building powerful, scalable web solutions.
-    Currently, I am pursuing Java to strengthen my software engineering skills, focusing on backend development,
-    object-oriented programming, and building enterprise-level applications.
-    This portfolio reflects my learning journey and showcases my growth as a software engineer.
-  </p>
-</section>
-
-<section>
-  <h2>Projects</h2>
-  <div class="projects">
-    <div class="project">
-      <h3>Coming Soon</h3>
-      <p>Projects will appear here as I continue learning and applying Java in real-world software development scenarios.</p>
+  <!-- Header / Hero Section -->
+  <header class="hero">
+    <div class="hero-content">
+      <img src="your-photo.jpg" alt="Jawad Ali Fayyazi" class="profile-pic" />
+      <h1>Jawad Ali Fayyazi</h1>
+      <p class="subtitle">Web Developer | Pursuing Java for Software Engineering</p>
+      <div class="hero-buttons">
+        <a href="#projects" class="btn-primary">View Projects</a>
+        <a href="Jawad-Ali-Fayyazi-CV.pdf" download class="btn-outline">Download CV</a>
+      </div>
     </div>
-    <div class="project">
-      <h3>Coming Soon</h3>
-      <p>Stay tuned for Java-based applications, backend systems, and object-oriented programming projects.</p>
+  </header>
+
+  <!-- About Section -->
+  <section class="about" id="about">
+    <h2>About Me</h2>
+    <p>
+      I’m an experienced web developer passionate about creating high-performance and scalable digital experiences.
+      Currently, I’m pursuing Java to deepen my expertise in software engineering and backend development.
+      I aim to combine creativity and logic to build elegant, efficient, and future-ready solutions.
+    </p>
+  </section>
+
+  <!-- Projects Section -->
+  <section class="projects" id="projects">
+    <h2>Projects</h2>
+    <div class="project-grid">
+      <div class="project-card">
+        <h3>Java Portfolio System</h3>
+        <p>A web app structure built using Java, Spring Boot, and MySQL for portfolio management.</p>
+        <a href="project1.html" target="_blank" class="btn-small">View Project</a>
+      </div>
+      <div class="project-card">
+        <h3>Website Builder (Ezysite)</h3>
+        <p>A web builder tool developed with Laravel, Livewire, and GrapesJS — fully customizable for users.</p>
+        <a href="project2.html" target="_blank" class="btn-small">View Project</a>
+      </div>
+      <div class="project-card">
+        <h3>Placeholder Project</h3>
+        <p>Coming soon — new project updates will appear here as I progress in Java development.</p>
+        <a href="project3.html" target="_blank" class="btn-small">View Project</a>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
+  <!-- Contact Section -->
+  <section class="contact" id="contact">
+    <h2>Get In Touch</h2>
+    <p>Want to collaborate or connect? Feel free to reach out via the platforms below.</p>
+    <div class="contact-links">
+      <a href="mailto:Jawad.ali.fayyazi@gmail.com" target="_blank">📧 Email</a>
+      <a href="https://github.com/jawad-fayyazi" target="_blank">💻 GitHub</a>
+      <a href="https://www.linkedin.com/in/jawad-ali-fayyazi/" target="_blank">🔗 LinkedIn</a>
+      <a href="https://twitter.com/jawad-ali-fayyazi" target="_blank">🐦 Twitter</a>
+    </div>
+  </section>
 
-  <section id="contact" class="contact-section">
-  <h2>Contact Me</h2>
-  <p>If you'd like to connect or collaborate, feel free to reach out through any of the platforms below.</p>
-  <div class="contact-links">
-    <a href="mailto:Jawad.ali.fayyazi@gmail.com" target="_blank">
-      <img src="https://img.icons8.com/fluency/48/000000/gmail-new.png" alt="Email Icon" />
-      Email
-    </a>
-    <a href="https://github.com/jawad-fayyazi" target="_blank">
-      <img src="https://img.icons8.com/ios-glyphs/48/ffffff/github.png" alt="GitHub Icon" />
-      GitHub
-    </a>
-    <a href="https://www.linkedin.com/in/jawad-ali-fayyazi/" target="_blank">
-      <img src="https://img.icons8.com/fluency/48/000000/linkedin.png" alt="LinkedIn Icon" />
-      LinkedIn
-    </a>
-    <a href="https://twitter.com/jawad-ali-fayyazi" target="_blank">
-      <img src="https://img.icons8.com/color/48/000000/twitter--v1.png" alt="Twitter Icon" />
-      Twitter
-    </a>
-  </div>
-</section>
-
-
+  <!-- Footer -->
   <footer>
-    <p>&copy; 2025 Jawad Ali Fayyazi. All rights reserved.</p>
+    <p>&copy; 2025 Jawad Ali Fayyazi. All Rights Reserved.</p>
   </footer>
 </body>
 </html>
