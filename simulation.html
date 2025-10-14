@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Projectile Motion — Simulation</title>
+    <style>
+        body {
+            display: flex;
+            gap: 20px;
+            font-family: Arial;
+            padding: 20px;
+        }
+
+        #canvas-holder {
+            border: 1px solid #ccc;
+        }
+
+        .controls {
+            max-width: 320px;
+        }
+
+        label {
+            display: block;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #444;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+</head>
+
+<body>
+    <div id="canvas-holder"></div>
+
+    <div class="controls">
+        <h3>Projectile Controls</h3>
+        <label>Initial speed (m/s): <span id="speedVal">20</span>
+            <input id="speed" type="range" min="1" max="80" value="20" />
+        </label>
+
+        <label>Angle (degrees): <span id="angleVal">45</span>
+            <input id="angle" type="range" min="0" max="90" value="45" />
+        </label>
+
+        <label>Mass (kg): <span id="massVal">1.0</span>
+            <input id="mass" type="range" min="0.1" max="5" step="0.1" value="1.0" />
+        </label>
+
+        <label><input id="dragToggle" type="checkbox" /> Enable linear drag (k·v)</label>
+        <label>Drag coeff k: <span id="kVal">0.05</span>
+            <input id="k" type="range" min="0" max="0.5" step="0.01" value="0.05" />
+        </label>
+
+        <button id="launchBtn">Launch</button>
+        <button id="resetBtn">Reset</button>
+
+        <hr />
+        <div class="small">
+            <div>Simulated time: <span id="simTime">0.00</span> s</div>
+            <div>Analytic time of flight (no drag): <span id="analyticT">—</span> s</div>
+            <div>Analytic range (no drag): <span id="analyticR">—</span> m</div>
+            <div>Analytic max height (no drag): <span id="analyticH">—</span> m</div>
+            <div>Simulated range: <span id="simRange">0.00</span> m</div>
+            <div>Simulated max height: <span id="simH">0.00</span> m</div>
+        </div>
+    </div>
+
+    <script>
+        // p5 sketch
+        let canvasW = 700, canvasH = 450;
+        let projectile;
+        let path = [];
+        let g = 9.81; // m/s^2
+        let scalePxPerM = 6; // visual scale
+        let launched = false;
+        let startTime = 0;
+        let simRange = 0, simMaxH = 0;
+
+        function setup() {
+            let cnv = createCanvas(canvasW, canvasH);
+            cnv.parent('canvas-holder');
+            resetProjectile();
+
+            // UI bindings
+            const speed = document.getElementById('speed');
+            const angle = document.getElementById('angle');
+            const mass = document.getElementById('mass');
+            const k = document.getElementById('k');
+
+            ['speed', 'angle', 'mass', 'k'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateLabels);
+            });
+            document.getElementById('dragToggle').addEventListener('change', updateLabels);
+
+            document.getElementById('launchBtn').addEventListener('click', () => {
+                if (!launched) launchProjectile();
+            });
+            document.getElementById('resetBtn').addEventListener('click', resetProjectile);
+
+            updateLabels();
+        }
+
+        function resetProjectile() {
+            launched = false;
+            path = [];
+            simRange = 0; simMaxH = 0;
+            projectile = {
+                pos: createVector(0, 0), // meters; origin is ground at left
+                vel: createVector(0, 0),
+                acc: createVector(0, 0),
+                t: 0
+            };
+            document.getElementById('simTime').innerText = '0.00';
+            document.getElementById('simRange').innerText = '0.00';
+            document.getElementById('simH').innerText = '0.00';
+            updateLabels();
+        }
+
+        function launchProjectile() {
+            const v0 = Number(document.getElementById('speed').value);
+            const angDeg = Number(document.getElementById('angle').value);
+            const ang = radians(angDeg);
+            projectile.pos = createVector(0, 0);
+            projectile.vel = createVector(v0 * cos(ang), v0 * sin(ang));
+            projectile.t = 0;
+            launched = true;
+            startTime = millis() / 1000;
+            computeAnalytic(v0, angDeg);
+        }
+
+        function computeAnalytic(v0, angDeg) {
+            const ang = radians(angDeg);
+            const tFlight = (2 * v0 * Math.sin(ang)) / g;
+            const range = v0 * Math.cos(ang) * tFlight;
+            const hMax = (Math.pow(v0 * Math.sin(ang), 2)) / (2 * g);
+            document.getElementById('analyticT').innerText = tFlight.toFixed(3);
+            document.getElementById('analyticR').innerText = range.toFixed(3);
+            document.getElementById('analyticH').innerText = hMax.toFixed(3);
+        }
+
+        function updateLabels() {
+            document.getElementById('speedVal').innerText = document.getElementById('speed').value;
+            document.getElementById('angleVal').innerText = document.getElementById('angle').value;
+            document.getElementById('massVal').innerText = Number(document.getElementById('mass').value).toFixed(1);
+            document.getElementById('kVal').innerText = Number(document.getElementById('k').value).toFixed(2);
+            document.getElementById('dragToggle').checked ? null : null;
+        }
+
+        function draw() {
+            background(245);
+            // ground
+            stroke(100); line(0, height - 40, width, height - 40);
+
+            // draw axes scale
+            push();
+            translate(40, height - 40);
+            noFill();
+            stroke(200);
+            for (let x = 0; x < width; x += 50) line(x, 0, x, -height + 40);
+            pop();
+
+            // simulation step
+            if (launched) {
+                let dt = 1 / 60; // fixed time step in seconds for stability
+                const mass = Number(document.getElementById('mass').value);
+                const k = Number(document.getElementById('k').value);
+                const dragOn = document.getElementById('dragToggle').checked;
+
+                // compute acceleration: gravity + drag(-k*v / m)
+                let accel = createVector(0, -g);
+                if (dragOn) {
+                    // linear drag: F_drag = -k * v => a_drag = -k/m * v
+                    let aDrag = p5.Vector.mult(projectile.vel, -k / mass);
+                    accel.add(aDrag);
+                }
+                // integrate (semi-implicit Euler)
+                projectile.vel.add(p5.Vector.mult(accel, dt));
+                projectile.pos.add(p5.Vector.mult(projectile.vel, dt));
+                projectile.t += dt;
+
+                // record path
+                path.push(projectile.pos.copy());
+                // update sim stats
+                document.getElementById('simTime').innerText = projectile.t.toFixed(2);
+                if (projectile.pos.y > simMaxH) simMaxH = projectile.pos.y;
+                document.getElementById('simH').innerText = simMaxH.toFixed(3);
+
+                // projectile hits ground (y<=0) and after leaving origin
+                if (projectile.pos.y <= 0 && projectile.t > 0.01 && projectile.vel.y < 0) {
+                    launched = false;
+                    // range is last x position (if negative due to step, interpolate)
+                    simRange = projectile.pos.x;
+                    if (simRange < 0) simRange = 0;
+                    document.getElementById('simRange').innerText = simRange.toFixed(3);
+                }
+            }
+
+            // draw path and projectile (convert meters -> px)
+            push();
+            translate(40, height - 40); // origin
+            scale(1, -1); // flip y so up is positive
+            stroke(0, 100, 200);
+            strokeWeight(2);
+            noFill();
+            beginShape();
+            for (let v of path) {
+                vertex(v.x * scalePxPerM, v.y * scalePxPerM);
+            }
+            endShape();
+
+            // draw current projectile
+            if (path.length > 0) {
+                const p = path[path.length - 1];
+                fill(220, 40, 40);
+                noStroke();
+                ellipse(p.x * scalePxPerM, p.y * scalePxPerM, 10, 10);
+            } else {
+                // show launcher properly aligned
+                push();
+                resetMatrix(); // clear all previous transformations
+                translate(40, height - 40);
+                rotate(-radians(Number(document.getElementById('angle').value)));
+                fill(120);
+                rect(0, -5, 30, 10);
+                pop();
+            }
+
+
+            // axis labels (meters)
+            fill(0);
+            scale(1, -1);
+            pop();
+
+            // show simple HUD
+            fill(0);
+            noStroke();
+            textSize(12);
+            text("Scale: " + scalePxPerM + " px/m", 10, 18);
+            text("Click 'Launch' then watch. Toggle drag to see difference.", 10, 34);
+        }
+    </script>
+</body>
+
+</html>
