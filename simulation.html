@@ -1,248 +1,592 @@
 <!doctype html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
-    <title>Projectile Motion — Simulation</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Slingshot Basket Physics Game</title>
     <style>
-        body {
-            display: flex;
-            gap: 20px;
-            font-family: Arial;
-            padding: 20px;
+        :root {
+            --bg: #0f172a;
+            --panel: #0b1220;
+            --accent: #60a5fa;
+            --muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
         }
 
-        #canvas-holder {
-            border: 1px solid #ccc;
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, system-ui, Arial;
+            background: linear-gradient(180deg, #020617 0%, #081028 100%);
+            color: #e6eef8;
+        }
+
+        .wrap {
+            max-width: 980px;
+            margin: 18px auto;
+            padding: 16px;
+        }
+
+        .top {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0 0 6px 0;
+        }
+
+        .panel {
+            background: rgba(10, 18, 30, 0.6);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 18px rgba(2, 6, 23, 0.6);
         }
 
         .controls {
-            max-width: 320px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         label {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        input[type=number] {
+            width: 80px;
+            padding: 6px;
+            border-radius: 6px;
+            border: none;
+            background: #091225;
+            color: #dfe9fb;
+            font-weight: 600
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: #04202f;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        button.secondary {
+            background: #111827;
+            color: #fff
+        }
+
+        #game {
+            width: 100%;
+            height: 560px;
+            margin-top: 12px;
+            background: linear-gradient(#0b1530, #041029);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        canvas {
             display: block;
-            margin-top: 8px;
-            font-size: 14px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hud {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            background: rgba(2, 6, 23, 0.6);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .msg {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        .msg.success {
+            background: linear-gradient(90deg, #052e1f, #0b4030);
+            color: var(--success)
+        }
+
+        .msg.fail {
+            background: linear-gradient(90deg, #2b0505, #3f0a0a);
+            color: var(--danger)
         }
 
         .small {
             font-size: 12px;
-            color: #444;
+            color: var(--muted)
+        }
+
+        .footer {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .inline {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
 </head>
 
 <body>
-    <div id="canvas-holder"></div>
+    <div class="wrap">
+        <div class="top">
+            <div>
+                <h1>Slingshot → Basket (learn projectile physics)</h1>
+                <div class="small">Pull the slingshot, release. Real-time angle & velocity shown. Basket spawns randomly
+                    each round.</div>
+            </div>
+            <div class="controls panel">
+                <div>
+                    <label>Gravity (g m/s²)</label><br>
+                    <input id="gravity" type="number" step="0.1" value="9.81" />
+                </div>
+                <div>
+                    <label>Ball mass (kg)</label><br>
+                    <input id="mass" type="number" step="0.1" value="0.2" />
+                </div>
+                <div>
+                    <label>Stretch → speed scale</label><br>
+                    <input id="scale" type="number" step="0.1" value="0.08" />
+                </div>
+                <div style="align-self:end">
+                    <button id="resetBtn">New Round</button>
+                    <button class="secondary" id="resetAll">Reset All</button>
+                </div>
+            </div>
+        </div>
 
-    <div class="controls">
-        <h3>Projectile Controls</h3>
-        <label>Initial speed (m/s): <span id="speedVal">20</span>
-            <input id="speed" type="range" min="1" max="80" value="20" />
-        </label>
+        <div id="game" class="panel">
+            <canvas id="c"></canvas>
+            <div class="hud panel" id="hud">
+                <div><strong>Distance to basket:</strong> <span id="dist">—</span> m</div>
+                <div><strong>Angle (°):</strong> <span id="angle">—</span></div>
+                <div><strong>Velocity (m/s):</strong> <span id="vel">—</span></div>
+                <div class="small">Theoretical minimal speed: <span id="vmin">—</span> m/s (angle 45°)</div>
+                <div class="small">Tip: mass doesn't change trajectory (no air resistance).</div>
+                <div class="small">
+                    Formula used: <br>
+                    <strong>R = (v² × sin(2θ)) / g</strong><br>
+                    <strong>v = √((R × g) / sin(2θ))</strong>
+                </div>
+            </div>
 
-        <label>Angle (degrees): <span id="angleVal">45</span>
-            <input id="angle" type="range" min="0" max="90" value="45" />
-        </label>
+            <div id="message" class="msg" style="display:none"></div>
+        </div>
 
-        <label>Mass (kg): <span id="massVal">1.0</span>
-            <input id="mass" type="range" min="0.1" max="5" step="0.1" value="1.0" />
-        </label>
-
-        <label><input id="dragToggle" type="checkbox" /> Enable linear drag (k·v)</label>
-        <label>Drag coeff k: <span id="kVal">0.05</span>
-            <input id="k" type="range" min="0" max="0.5" step="0.01" value="0.05" />
-        </label>
-
-        <button id="launchBtn">Launch</button>
-        <button id="resetBtn">Reset</button>
-
-        <hr />
-        <div class="small">
-            <div>Simulated time: <span id="simTime">0.00</span> s</div>
-            <div>Analytic time of flight (no drag): <span id="analyticT">—</span> s</div>
-            <div>Analytic range (no drag): <span id="analyticR">—</span> m</div>
-            <div>Analytic max height (no drag): <span id="analyticH">—</span> m</div>
-            <div>Simulated range: <span id="simRange">0.00</span> m</div>
-            <div>Simulated max height: <span id="simH">0.00</span> m</div>
+        <div class="footer small">
+            How it checks: the game calculates the physics solution(s) for the given distance and compares the user's
+            launch angle+speed to those solutions within a small tolerance. If close enough → success.
         </div>
     </div>
 
     <script>
-        // p5 sketch
-        let canvasW = 700, canvasH = 450;
-        let projectile;
-        let path = [];
-        let g = 9.81; // m/s^2
-        let scalePxPerM = 6; // visual scale
-        let launched = false;
-        let startTime = 0;
-        let simRange = 0, simMaxH = 0;
+        /* -------------------------
+           Simple slingshot physics game
+           - Canvas handles drawing and physics loop
+           - Drag to pull from sling origin. Release to launch.
+           - Basket is a circle at the same vertical level (same height).
+           - Checks if projectile passes within basket radius near horizontal distance.
+           - Uses ideal projectile motion formulas.
+           ------------------------- */
 
-        function setup() {
-            let cnv = createCanvas(canvasW, canvasH);
-            cnv.parent('canvas-holder');
-            resetProjectile();
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d', { alpha: true });
+        let W, H;
 
-            // UI bindings
-            const speed = document.getElementById('speed');
-            const angle = document.getElementById('angle');
-            const mass = document.getElementById('mass');
-            const k = document.getElementById('k');
+        function resize() {
+            // keep canvas resolution high
+            W = canvas.clientWidth = canvas.parentElement.clientWidth;
+            H = canvas.clientHeight = canvas.parentElement.clientHeight;
+            canvas.width = Math.floor(W * devicePixelRatio);
+            canvas.height = Math.floor(H * devicePixelRatio);
+            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
-            ['speed', 'angle', 'mass', 'k'].forEach(id => {
-                document.getElementById(id).addEventListener('input', updateLabels);
-            });
-            document.getElementById('dragToggle').addEventListener('change', updateLabels);
+        /* Game variables */
+        const sling = { x: 120, y: H - 120 }; // will update y on resize
+        let basket = { x: 500, y: sling.y, r: 28 }; // pixels
+        let dragging = false;
+        let dragPos = { x: 0, y: 0 };
+        let projectile = null; // {x,y,vx,vy,alive}
+        let gravityInput = document.getElementById('gravity');
+        let massInput = document.getElementById('mass');
+        let scaleInput = document.getElementById('scale');
+        const hudDist = document.getElementById('dist');
+        const hudAngle = document.getElementById('angle');
+        const hudVel = document.getElementById('vel');
+        const hudVmin = document.getElementById('vmin');
+        const messageEl = document.getElementById('message');
 
-            document.getElementById('launchBtn').addEventListener('click', () => {
-                if (!launched) launchProjectile();
-            });
-            document.getElementById('resetBtn').addEventListener('click', resetProjectile);
-
-            updateLabels();
+        /* Utility */
+        function pxToMeters(px) {
+            // define a mapping: 1 meter == 80 pixels roughly (tweakable)
+            return px / 80;
+        }
+        function metersToPx(m) {
+            return m * 80;
         }
 
-        function resetProjectile() {
-            launched = false;
-            path = [];
-            simRange = 0; simMaxH = 0;
+        /* spawn basket at random horizontal distance (in meters) */
+        function newRound() {
+            hideMessage();
+            projectile = null;
+            // choose distance between 4m and 18m
+            const dMeters = 4 + Math.random() * 14;
+            const px = metersToPx(dMeters);
+            // place within canvas width, but ensure it's to the right of sling
+            const minX = sling.x + 100;
+            const maxX = Math.max(minX + 200, Math.min(W - 80, sling.x + px));
+            basket.x = Math.min(maxX, Math.max(minX, sling.x + px));
+            basket.y = sling.y;
+            basket.r = 26;
+            updateHUD();
+        }
+
+        /* map current basket distance (m) and compute v_min */
+        function updateHUD() {
+            const dx = basket.x - sling.x;
+            const dMeters = pxToMeters(Math.abs(dx));
+            hudDist.textContent = dMeters.toFixed(2) + ' m';
+            const g = parseFloat(gravityInput.value) || 9.81;
+            const vmin = Math.sqrt(g * dMeters);
+            hudVmin.textContent = vmin.toFixed(2);
+            // Update live values if dragging or projectile
+            if (dragging) {
+                const dxs = dragPos.x - sling.x;
+                const dys = dragPos.y - sling.y;
+                const angleRad = Math.atan2(-dys, dxs); // up is negative y
+                const angleDeg = angleRad * 180 / Math.PI;
+                const stretch = Math.hypot(dxs, dys);
+                const v = Math.max(0, stretch * parseFloat(scaleInput.value));
+                hudAngle.textContent = angleDeg.toFixed(1);
+                hudVel.textContent = v.toFixed(2);
+            } else if (projectile) {
+                const vx = projectile.vx;
+                const vy = projectile.vy;
+                const v = Math.hypot(vx, vy);
+                const angleDeg = Math.atan2(-vy, vx) * 180 / Math.PI;
+                hudAngle.textContent = angleDeg.toFixed(1);
+                hudVel.textContent = v.toFixed(2);
+            } else {
+                hudAngle.textContent = '—';
+                hudVel.textContent = '—';
+            }
+        }
+
+        /* Input handling (mouse + touch) */
+        function getPosFromEvent(e) {
+            if (e.touches && e.touches[0]) {
+                const rect = canvas.getBoundingClientRect();
+                return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+            } else {
+                const rect = canvas.getBoundingClientRect();
+                return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const p = getPosFromEvent(e);
+            const d = Math.hypot(p.x - sling.x, p.y - sling.y);
+            if (d < 80) { dragging = true; dragPos = p; updateHUD(); }
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            dragPos = getPosFromEvent(e);
+            updateHUD();
+        });
+        window.addEventListener('mouseup', (e) => {
+            if (!dragging) return;
+            dragging = false;
+            const dx = dragPos.x - sling.x;
+            const dy = dragPos.y - sling.y;
+            const stretch = Math.hypot(dx, dy);
+            const v = Math.max(0, stretch * parseFloat(scaleInput.value)); // m/s in our mock mapping
+            // direction: from sling toward opposite of pull (slingshot releases opposite direction)
+            const angleRad = Math.atan2(-dy, dx); // up negative
+            const vx = v * Math.cos(angleRad);
+            const vy = -v * Math.sin(angleRad); // vy positive down in canvas coordinates, but we store vy upwards negative
+            // create projectile; convert units: we treat vx,vy as m/s in our physics, but canvas positions in px -> convert
+            // We'll do time-based physics in meters, then map to px for drawing.
             projectile = {
-                pos: createVector(0, 0), // meters; origin is ground at left
-                vel: createVector(0, 0),
-                acc: createVector(0, 0),
-                t: 0
+                x_m: pxToMeters(sling.x),
+                y_m: pxToMeters(sling.y),
+                vx: vx, // m/s
+                vy: vy, // m/s (negative means up)
+                alive: true,
+                time: 0
             };
-            document.getElementById('simTime').innerText = '0.00';
-            document.getElementById('simRange').innerText = '0.00';
-            document.getElementById('simH').innerText = '0.00';
-            updateLabels();
+            // check if initial values are capable of reaching basket using theoretical formulas
+            checkShotSolution(v, angleRad);
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const p = getPosFromEvent(e);
+            const d = Math.hypot(p.x - sling.x, p.y - sling.y);
+            if (d < 80) { dragging = true; dragPos = p; updateHUD(); }
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            if (!dragging) return;
+            e.preventDefault();
+            dragPos = getPosFromEvent(e);
+            updateHUD();
+        }, { passive: false });
+        canvas.addEventListener('touchend', (e) => {
+            if (!dragging) return;
+            dragging = false;
+            const dx = dragPos.x - sling.x;
+            const dy = dragPos.y - sling.y;
+            const stretch = Math.hypot(dx, dy);
+            const v = Math.max(0, stretch * parseFloat(scaleInput.value));
+            const angleRad = Math.atan2(-dy, dx);
+            const vx = v * Math.cos(angleRad);
+            const vy = -v * Math.sin(angleRad);
+            projectile = {
+                x_m: pxToMeters(sling.x),
+                y_m: pxToMeters(sling.y),
+                vx: vx,
+                vy: vy,
+                alive: true,
+                time: 0
+            };
+            checkShotSolution(v, angleRad);
+        }, { passive: false });
+
+        /* Check user's launch against theory and show message if hits (we also detect collision during sim) */
+        function checkShotSolution(userV, userAngleRad) {
+            const dx = basket.x - sling.x;
+            const dMeters = pxToMeters(Math.abs(dx));
+            const g = parseFloat(gravityInput.value) || 9.81;
+            // minimal speed for same-height target:
+            const vMin = Math.sqrt(g * dMeters);
+            // If user speed < vMin -> impossible regardless of angle
+            if (userV < vMin - 1e-6) {
+                // we won't immediately declare failure; physics simulation will show result
+                // but show a hint
+                showMessage('Speed too low to reach basket. Try stronger pull.', 'fail', 2000);
+            } else {
+                // also compute angle solutions for exact hit given user's speed:
+                const sin2theta = (g * dMeters) / (userV * userV);
+                if (sin2theta > 1) {
+                    showMessage('No angle possible with that speed (needs more speed).', 'fail', 2000);
+                } else {
+                    const twoThetaA = Math.asin(Math.min(1, Math.max(-1, sin2theta)));
+                    const thetaA = twoThetaA / 2;
+                    const thetaB = (Math.PI / 2) - thetaA; // second solution
+                    // Compute degrees
+                    const degA = thetaA * 180 / Math.PI;
+                    const degB = thetaB * 180 / Math.PI;
+                    showMessage(`Two theoretical angles to land at distance: ${degA.toFixed(1)}° or ${degB.toFixed(1)}°.`, 'success', 1800);
+                }
+            }
         }
 
-        function launchProjectile() {
-            const v0 = Number(document.getElementById('speed').value);
-            const angDeg = Number(document.getElementById('angle').value);
-            const ang = radians(angDeg);
-            projectile.pos = createVector(0, 0);
-            projectile.vel = createVector(v0 * cos(ang), v0 * sin(ang));
-            projectile.t = 0;
-            launched = true;
-            startTime = millis() / 1000;
-            computeAnalytic(v0, angDeg);
+        /* Show messages */
+        let msgTimeout = null;
+        function showMessage(text, kind = 'success', ms = 2200) {
+            clearTimeout(msgTimeout);
+            messageEl.style.display = 'block';
+            messageEl.className = 'msg ' + (kind === 'success' ? 'success' : 'fail');
+            messageEl.textContent = text;
+            if (ms) msgTimeout = setTimeout(hideMessage, ms);
         }
+        function hideMessage() { messageEl.style.display = 'none'; clearTimeout(msgTimeout); msgTimeout = null; }
 
-        function computeAnalytic(v0, angDeg) {
-            const ang = radians(angDeg);
-            const tFlight = (2 * v0 * Math.sin(ang)) / g;
-            const range = v0 * Math.cos(ang) * tFlight;
-            const hMax = (Math.pow(v0 * Math.sin(ang), 2)) / (2 * g);
-            document.getElementById('analyticT').innerText = tFlight.toFixed(3);
-            document.getElementById('analyticR').innerText = range.toFixed(3);
-            document.getElementById('analyticH').innerText = hMax.toFixed(3);
+        /* Restart controls */
+        document.getElementById('resetBtn').addEventListener('click', () => newRound());
+        document.getElementById('resetAll').addEventListener('click', () => {
+            gravityInput.value = 9.81;
+            massInput.value = 0.2;
+            scaleInput.value = 0.08;
+            newRound();
+        });
+
+        /* Simulation loop */
+        let lastT = performance.now();
+        function loop(t) {
+            const dt = Math.min(0.05, (t - lastT) / 1000); // seconds, clamp
+            lastT = t;
+            update(dt);
+            draw();
+            requestAnimationFrame(loop);
         }
+        requestAnimationFrame(loop);
 
-        function updateLabels() {
-            document.getElementById('speedVal').innerText = document.getElementById('speed').value;
-            document.getElementById('angleVal').innerText = document.getElementById('angle').value;
-            document.getElementById('massVal').innerText = Number(document.getElementById('mass').value).toFixed(1);
-            document.getElementById('kVal').innerText = Number(document.getElementById('k').value).toFixed(2);
-            document.getElementById('dragToggle').checked ? null : null;
+        function update(dt) {
+            // adjust sling y in case of resize
+            sling.y = H - 110;
+            basket.y = sling.y;
+            if (projectile && projectile.alive) {
+                const g = parseFloat(gravityInput.value) || 9.81;
+                projectile.time += dt;
+                // integrate motion (meters)
+                const t = projectile.time;
+                const x_m = projectile.x_m + projectile.vx * t;
+                // vy initial is projectile.vy (m/s, negative = up). vertical position: y = y0 + vy*t + 0.5*g*t^2 (down positive)
+                const y_m = projectile.y_m + projectile.vy * t + 0.5 * g * t * t;
+                projectile.x_m_curr = x_m;
+                projectile.y_m_curr = y_m;
+                // if it hits the ground (y beyond canvas)
+                const ground_m = pxToMeters(H + 200);
+                if (metersToPx(y_m) > H + 200 || x_m < -10 || x_m > pxToMeters(W + 200)) {
+                    projectile.alive = false;
+                    // if not hit basket, show fail and allow restart
+                    if (!projectile.hit) {
+                        showMessage('Failed — try again.', 'fail');
+                    }
+                }
+                // check collision with basket
+                const pxX = metersToPx(x_m);
+                const pxY = metersToPx(y_m);
+                const dist = Math.hypot(pxX - basket.x, pxY - basket.y);
+                if (dist <= basket.r) {
+                    projectile.alive = false;
+                    projectile.hit = true;
+                    showMessage('Congrats — you understood the physics concept!', 'success');
+                }
+            }
+            updateHUD();
         }
 
         function draw() {
-            background(245);
-            // ground
-            stroke(100); line(0, height - 40, width, height - 40);
+            // clear
+            ctx.clearRect(0, 0, W, H);
+            // background gradient
+            const g = ctx.createLinearGradient(0, 0, 0, H);
+            g.addColorStop(0, '#07122b');
+            g.addColorStop(1, '#021024');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, W, H);
 
-            // draw axes scale
-            push();
-            translate(40, height - 40);
-            noFill();
-            stroke(200);
-            for (let x = 0; x < width; x += 50) line(x, 0, x, -height + 40);
-            pop();
+            // draw ground
+            ctx.fillStyle = '#091426';
+            ctx.fillRect(0, sling.y + 40, W, H - (sling.y + 40));
 
-            // simulation step
-            if (launched) {
-                let dt = 1 / 60; // fixed time step in seconds for stability
-                const mass = Number(document.getElementById('mass').value);
-                const k = Number(document.getElementById('k').value);
-                const dragOn = document.getElementById('dragToggle').checked;
+            // draw slingshot base
+            ctx.fillStyle = '#6b7280';
+            ctx.fillRect(sling.x - 6, sling.y - 20, 12, 40);
+            ctx.beginPath();
+            ctx.arc(sling.x, sling.y - 25, 12, 0, Math.PI * 2);
+            ctx.fill();
 
-                // compute acceleration: gravity + drag(-k*v / m)
-                let accel = createVector(0, -g);
-                if (dragOn) {
-                    // linear drag: F_drag = -k * v => a_drag = -k/m * v
-                    let aDrag = p5.Vector.mult(projectile.vel, -k / mass);
-                    accel.add(aDrag);
-                }
-                // integrate (semi-implicit Euler)
-                projectile.vel.add(p5.Vector.mult(accel, dt));
-                projectile.pos.add(p5.Vector.mult(projectile.vel, dt));
-                projectile.t += dt;
-
-                // record path
-                path.push(projectile.pos.copy());
-                // update sim stats
-                document.getElementById('simTime').innerText = projectile.t.toFixed(2);
-                if (projectile.pos.y > simMaxH) simMaxH = projectile.pos.y;
-                document.getElementById('simH').innerText = simMaxH.toFixed(3);
-
-                // projectile hits ground (y<=0) and after leaving origin
-                if (projectile.pos.y <= 0 && projectile.t > 0.01 && projectile.vel.y < 0) {
-                    launched = false;
-                    // range is last x position (if negative due to step, interpolate)
-                    simRange = projectile.pos.x;
-                    if (simRange < 0) simRange = 0;
-                    document.getElementById('simRange').innerText = simRange.toFixed(3);
-                }
-            }
-
-            // draw path and projectile (convert meters -> px)
-            push();
-            translate(40, height - 40); // origin
-            scale(1, -1); // flip y so up is positive
-            stroke(0, 100, 200);
-            strokeWeight(2);
-            noFill();
-            beginShape();
-            for (let v of path) {
-                vertex(v.x * scalePxPerM, v.y * scalePxPerM);
-            }
-            endShape();
-
-            // draw current projectile
-            if (path.length > 0) {
-                const p = path[path.length - 1];
-                fill(220, 40, 40);
-                noStroke();
-                ellipse(p.x * scalePxPerM, p.y * scalePxPerM, 10, 10);
+            // draw band if dragging or ready
+            if (dragging) {
+                ctx.strokeStyle = 'rgba(96,165,250,0.9)';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(sling.x - 8, sling.y - 18);
+                ctx.lineTo(dragPos.x, dragPos.y);
+                ctx.lineTo(sling.x + 8, sling.y - 18);
+                ctx.stroke();
             } else {
-                // show launcher properly aligned
-                push();
-                resetMatrix(); // clear all previous transformations
-                translate(40, height - 40);
-                rotate(-radians(Number(document.getElementById('angle').value)));
-                fill(120);
-                rect(0, -5, 30, 10);
-                pop();
+                ctx.strokeStyle = 'rgba(100,116,139,0.5)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(sling.x - 8, sling.y - 18);
+                ctx.lineTo(sling.x - 40, sling.y - 6);
+                ctx.moveTo(sling.x + 8, sling.y - 18);
+                ctx.lineTo(sling.x + 36, sling.y - 4);
+                ctx.stroke();
             }
 
+            // draw basket
+            ctx.fillStyle = '#b45309';
+            ctx.beginPath();
+            ctx.ellipse(basket.x, basket.y - 6, basket.r * 1.1, basket.r * 0.55, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(basket.x, basket.y - 6, basket.r * 1.1, basket.r * 0.55, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            // rim
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(basket.x, basket.y - 6, basket.r * 0.9, 0, Math.PI, false);
+            ctx.stroke();
 
-            // axis labels (meters)
-            fill(0);
-            scale(1, -1);
-            pop();
+            // draw distance marker
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px system-ui';
+            ctx.fillText('Basket', basket.x - 22, basket.y - basket.r - 12);
 
-            // show simple HUD
-            fill(0);
-            noStroke();
-            textSize(12);
-            text("Scale: " + scalePxPerM + " px/m", 10, 18);
-            text("Click 'Launch' then watch. Toggle drag to see difference.", 10, 34);
+            // draw projectile
+            if (projectile) {
+                const pxX = metersToPx(projectile.x_m_curr || projectile.x_m);
+                const pxY = metersToPx(projectile.y_m_curr || projectile.y_m);
+                ctx.beginPath();
+                ctx.fillStyle = '#60a5fa';
+                ctx.arc(pxX, pxY, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#04202f';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // draw drag preview trajectory (optional)
+            // if (dragging) {
+            //     drawPreviewTrajectory();
+            // }
         }
+
+        /* Draw predicted trajectory using current drag values */
+        function drawPreviewTrajectory() {
+            const dx = dragPos.x - sling.x;
+            const dy = dragPos.y - sling.y;
+            const stretch = Math.hypot(dx, dy);
+            const v = Math.max(0, stretch * parseFloat(scaleInput.value));
+            const angleRad = Math.atan2(-dy, dx);
+            const g = parseFloat(gravityInput.value) || 9.81;
+            ctx.strokeStyle = 'rgba(96,165,250,0.6)';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            const steps = 60;
+            for (let i = 0; i < steps; i++) {
+                const t = i * 0.05;
+                const x_m = pxToMeters(sling.x) + v * Math.cos(angleRad) * t;
+                const y_m = pxToMeters(sling.y) + (-v * Math.sin(angleRad)) * t + 0.5 * g * t * t;
+                const pxX = metersToPx(x_m);
+                const pxY = metersToPx(y_m);
+                if (i === 0) ctx.moveTo(pxX, pxY);
+                else ctx.lineTo(pxX, pxY);
+            }
+            ctx.stroke();
+        }
+
+        /* init positions and round */
+        function init() {
+            sling.y = H - 110;
+            basket.y = sling.y;
+            newRound();
+        }
+        init();
+
     </script>
 </body>
 
